@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang = "Fa" dir = "rtl">
+<head>
+ <title> api تقویم ایران </title>
+
+
+
+</head>
+<body>
+ <header>
+ <h1>  api تقویم ایران </h1>
+ <p> به همراه وقایع شمسی </p> 
+
+ </header>
+  <div class = "content">
+ <h2> سلام دنیا </h2>
+ <p>
+ به api تقویم فارسی ایران خوش‌ آمدید این api برای ساده سازی کار برنامه نویسان به وجود آمده است و اصولا در پروژه هایی که نیاز به یک ساعت و تاریخ دقیق از سمت سرور دارند میتواند استفاده شود همچنین این api از یک سیستم نمایش رویداد های شمسی ایران نیاز پشتیبانی میکند :) 
+ کد های این پروژه را میتوانید از گیت هاب دانلود کنید 
+
+ <h2> چطوری کار میکنه ؟‌ </h2> 
+ <h3> زمان ‌</h3>
+ <div class="code">
+  GET /time
+ <br>
+  برای مثال : http://api.felfelpardaz.ir/gahshomar/time
+ </div>
+ <h3> نتیجه </h3>
+ <div class="result">
+  2:55:21 AM
+ </div>
+
+  <h3> تاریخ فعلی ‌</h3>
+ <div class="code">
+  GET /date
+ <br>
+  برای مثال : http://api.felfelpardaz.ir/gahshomar/date
+ </div>
+ <h3> نتیجه </h3>
+ <div class="result">
+یک json بر میگرداند که حاوی مقادیر زیر است
+ <br>
+ date : تاریخ فعلی به میلادی <br>
+ jdate : تاریخ فعلی به شمسی <br>
+ event : رویداد مربوط به امروز <br>
+ week : نام روز هفته <br>
+ </div>
+  <h3>شمسی - تاریخ درخواستی ‌</h3>
+ <div class="code">
+  GET /date/1395-01-01
+ برای مثال : http://api.felfelpardaz.ir/gahshomar/date/1395-01-01
+ <br>
+
+ </div>
+ <h3> نتیجه </h3>
+ <div class="result">
+یک json بر میگرداند که حاوی مقادیر زیر است
+ <br>
+ date : تاریخ درخواستی به میلادی <br>
+ jdate : تاریخ درخواست به شمسی <br>
+ event : رویداد مربوط به روز  <br>
+ week : نام روز هفته <br>
+ </div>
+ <h3>
+ تبدیل 
+ </h3>
+ <p> 
+این متد برای تبدیل تاریخ استفاده میشود و دو ارگومان میگیرد
+ ارگومان اول نوع تبدیل و آرگومان دوم تاریخ مربوطه
+ </p>
+ <div class = "code">
+  GET to/[type]/[date]
+ <pre>
+ ارگومان type دو حالت میتواند باشد 
+  
+jalali (شمسی)
+ این نوع  برای تبدیل تاریخ میلادی به شمسی استفاده میشود 
+
+Gregorian (میلادی) 
+ این نوع جهت تبدیل به میلادی مورد استفاده میگیرد
+
+برای مثال
+ http://api.felfelpardaz.ir/gahshomari/to/jalali/2013-08-02
+ 
+</pre>
+ </div>
+ <div class ="result">
+ نتایج را مانند متد date بر میگرداند
+ <div>
+</div>
+
+ </div>
+<br> 
+<br>
+ با تشکر از شما جهت استفاده از این api 
+محمد جواد یاحقی
+ ایدی تلگرام :‌ @developero
+ کانال تلگرام : @mjyahaghi
+ <br><br>
+
+
+<style>
+header {
+	height : 140px; 
+	width : auto;
+	padding-top : 10px;
+	padding-bottom : 5px;
+	background : #674172; 
+	text-align : center;
+	color : #FFFFFF; 
+	border-radius : 14px;
+}
+
+.content {
+	border-style : solid;
+	margin-top : 10px;
+	width : auto;
+	border-radius : 16px;
+	border-width : 4px;
+	border-color : #913D88;
+	padding-top : 5px;
+	padding-right : 10px;
+}
+.code {
+	background:#D3D3D3;
+	text-align:center; 
+	font-size:14pt; 
+	width:auto;
+	height:50px auto;
+	margin-top:10px;
+	padding-top:15px;
+	border-radius:16px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-bottom:10px;
+}
+
+.result {
+	background:#ADD8E6;
+	text-align:center; 
+	font-size:14pt; 
+	width:auto;
+	height:50px auto;
+	margin-top:10px;
+	padding-top:15px;
+	border-radius:16px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-bottom:10px;
+}
+</style>
+</body>
+</html>
