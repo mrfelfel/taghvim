@@ -1,5 +1,4 @@
 let express = require("express");
-let jalali = require("jalaali-js");
 let app = express();
 let moment = require('moment');
 let momentj = require('moment-jalaali');
