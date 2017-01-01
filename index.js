@@ -28,6 +28,18 @@ app.get("/date", function(req, res) {
 
     res.json(resjson(m));
 });
+
+app.get("/jashn/:year/:name",function(req,res){
+             var evmet  = momentj(req.params.year, 'jYYYY-jMM-jDD');
+      for(let m in shamsi){
+           var regex = new RegExp(req.params.name , "g");
+          if(shamsi[m].match(regex)){
+            m  = momentj(req.params.year + "/" + m, 'jYYYY/jMM/jDD');
+                 res.send(resjson(m));
+            }
+     }
+ });
+
 app.get("/date/:from", function(req, res) {
 
 
