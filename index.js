@@ -1,87 +1,78 @@
-let express = require("express");
-let app = express();
-let moment = require('moment');
-let momentj = require('moment-jalaali');
-let shamsi = require("./shamsi");
-app.use('/', express.static('public'));
+const express = require("express");
+const moment = require("moment-jalaali");
+const shamsi = require("./shamsi");
 
+const app = express();
+const PORT = 4050;
 
+moment.loadPersian({ dialect: "persian-modern" });
 
-function getShamsiEvent(date) {
-    if (shamsi[date]) {
-        return shamsi[date]
-    } else {
-        return null
-    }
-}
+app.use(express.static("public"));
 
+/* ------------------ Utils ------------------ */
 
+const getShamsiEvent = (jDateKey) => shamsi[jDateKey] || null;
 
-let m = momentj();
-
-
-let jsonResponse = function (m) {
-    const resjes = {
-        "date": m.format('YYYY/MM/DD'),
-        "jdate": m.format('jYYYY/jMM/jDD'),
-        "event": getShamsiEvent(m.format('jMM/jDD')),
-        "week": m.locale("fa").format("dddd")
-    }
-    return resjes;
-}
-
-
-
-app.get("/time", function (req, res) {
-    res.send(moment().format('LTS'));
+const buildResponse = (m) => ({
+  date: m.format("YYYY/MM/DD"),
+  jdate: m.format("jYYYY/jMM/jDD"),
+  event: getShamsiEvent(m.format("jMM/jDD")),
+  week: m.locale("fa").format("dddd"),
 });
 
+const invalidDate = (res) =>
+  res.status(400).json({ error: "تاریخ نامعتبر است" });
 
+/* ------------------ Routes ------------------ */
 
-app.get("/date", function (req, res) {
-
-    res.json(jsonResponse(m));
+app.get("/time", (req, res) => {
+  res.send(moment().format("LTS"));
 });
 
-
-
-app.get("/jashn/:year/:name", function (req, res) {
-    var evmet = momentj(req.params.year, 'jYYYY-jMM-jDD');
-    for (let m in shamsi) {
-        var regex = new RegExp(req.params.name, "g");
-        if (shamsi[m].match(regex)) {
-            m = momentj(req.params.year + "/" + m, 'jYYYY/jMM/jDD');
-            res.send(jsonResponse(m));
-        }
-    }
+app.get("/date", (req, res) => {
+  const m = moment();
+  res.json(buildResponse(m));
 });
 
-app.get("/date/:from", function (req, res) {
-
-    m = momentj(req.params.from, 'jYYYY-jMM-jDD');
-    if (m.isValid()) {
-        res.json(jsonResponse(m));
-    } else {
-        res.send("خطا تاریخ نامعتبر است");
-    }
-
-
+app.get("/date/:from", (req, res) => {
+  const m = moment(req.params.from, "jYYYY-jMM-jDD", true);
+  if (!m.isValid()) return invalidDate(res);
+  res.json(buildResponse(m));
 });
 
+app.get("/to/:type/:from", (req, res) => {
+  const { type, from } = req.params;
 
-app.get("/to/:type/:from", function (req, res) {
-    if (req.params.type == "jalali") {
-        m = momentj(req.params.from, 'YYYY-MM-DD');
-    } else if (req.params.type == "gregorian") {
-        m = momentj(req.params.from, 'jYYYY-jMM-jDD');
-    }
-    res.json(jsonResponse(m));
+  let m;
+  if (type === "jalali") {
+    m = moment(from, "YYYY-MM-DD", true);
+  } else if (type === "gregorian") {
+    m = moment(from, "jYYYY-jMM-jDD", true);
+  } else {
+    return res.status(400).json({ error: "type نامعتبر است" });
+  }
+
+  if (!m.isValid()) return invalidDate(res);
+  res.json(buildResponse(m));
 });
 
+app.get("/jashn/:year/:name", (req, res) => {
+  const { year, name } = req.params;
+  const regex = new RegExp(name, "i");
 
-
-app.listen('4050', function (err) {
-    if (!err) {
-        console.log("ok server started");
+  for (const key in shamsi) {
+    if (regex.test(shamsi[key])) {
+      const m = moment(`${year}/${key}`, "jYYYY/jMM/jDD", true);
+      if (!m.isValid()) continue;
+      return res.json(buildResponse(m));
     }
+  }
+
+  res.status(404).json({ error: "جشنی با این نام پیدا نشد" });
+});
+
+/* ------------------ Server ------------------ */
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
