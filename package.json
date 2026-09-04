@@ -86,7 +86,8 @@
     "skills",
     "SKILL.md",
     "AGENTS.md",
-    "README.md"
+    "README.md",
+    "Dockerfile"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
