@@ -8,7 +8,7 @@ import { registerTools } from "./server.js";
 
 const server = new McpServer({
   name: "taghvim-mcp",
-  version: "3.0.0",
+  version: "3.0.1",
 });
 
 registerTools(server);

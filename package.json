@@ -1,6 +1,6 @@
 {
   "name": "taghvim-mcp",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Deterministic temporal reasoning engine for AI agents — date/time arithmetic, timezone conversion, calendar systems, holidays, business days, and recurrence",
   "type": "module",
   "main": "dist/index.js",
