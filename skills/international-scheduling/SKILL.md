@@ -1,10 +1,15 @@
 ---
 name: international-scheduling
-description: Business day calculations and public holiday awareness across 100+ countries
+description: >
+  Business day calculations and public holiday awareness across 100+ countries.
+  Check if a date is a business day, find next/previous business day, add business days,
+  count business days between dates. Look up public holidays for any country.
+  Supports configurable weekends: Sat-Sun (US/UK), Fri-Sat (Iran/Saudi), Sun-Mon (Maldives).
 triggers:
   - "business day"
   - "working day"
   - "next working day"
+  - "last business day of"
   - "holiday"
   - "public holiday"
   - "is today a holiday"
@@ -14,7 +19,17 @@ triggers:
   - "bank holiday"
   - "weekend"
   - "count business days"
-  - "last business day of"
+  - "add business days"
+  - "is this a working day"
+tags:
+  - business-days
+  - holidays
+  - scheduling
+  - international
+  - country-specific
+  - working-days
+  - public-holidays
+  - mcp
 tools:
   - business_days
   - holidays
@@ -42,8 +57,6 @@ Activate when the user asks about or references:
 | Friday–Saturday | Iran, Saudi Arabia, UAE, Egypt, most of Middle East |
 | Sunday–Monday | Maldives |
 
-The tool automatically uses the correct weekend for the given country code.
-
 ## Core tools
 
 | Tool | Use when... |
@@ -51,46 +64,35 @@ The tool automatically uses the correct weekend for the given country code.
 | `business_days` | Any business/working day calculation |
 | `holidays` | Holiday lookup, checking if a date is a holiday, finding next holiday |
 
-## Common agent patterns
+## Common patterns
 
 ### Check if a date is available
 ```
 User: "Is next Monday a good day to send the contract?"
-
-Agent workflow:
-1. business_days: operation=is_business_day, date=<next_monday>, country_code=US
-   → if false: suggest the next business day
+→ business_days(operation=is_business_day, date=<next_monday>, country_code=US)
 ```
 
 ### Schedule around holidays
 ```
 User: "Send the invoice 5 business days before the end of the year"
-
-Agent workflow:
-1. business_days: operation=add, date=2026-12-31, count=-5, country_code=US
-   → result.date is the target
+→ business_days(operation=add, date=2026-12-31, count=-5, country_code=US)
 ```
 
 ### Country-specific scheduling
 ```
 User: "When is the next business day in Japan?"
-
-Agent workflow:
-1. business_days: operation=next, date=<today>, country_code=JP
+→ business_days(operation=next, date=<today>, country_code=JP)
 ```
 
 ### Holiday awareness
 ```
 User: "Is there a public holiday in Germany this week?"
-
-Agent workflow:
-1. holidays: operation=between, country_code=DE, start_date=<monday>, end_date=<sunday>
-   → check result.holidays.length > 0
+→ holidays(operation=between, country_code=DE, start_date=<monday>, end_date=<sunday>)
 ```
 
 ## Key principles
 
 - **Always specify the country code** — defaults to US if omitted
 - **Never assume Saturday/Sunday weekend** — Middle Eastern countries use Friday/Saturday
-- **Check both weekends AND holidays** — a business day is neither a weekend nor a holiday
+- **Check both weekends AND holidays** — a business day is neither
 - **Use ISO 3166-1 alpha-2 codes**: US, GB, DE, JP, IR, AE, SA, FR, etc.

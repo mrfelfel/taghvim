@@ -1,21 +1,50 @@
 ---
 name: temporal-reasoning
-description: Deterministic date/time resolution, arithmetic, and timezone conversion for AI agents
+description: >
+  Deterministic date/time resolution, arithmetic, and timezone conversion for AI agents.
+  Resolve natural-language expressions like "tomorrow at 3pm" into ISO timestamps.
+  Perform date arithmetic with correct month-end and leap-year handling.
+  Convert datetimes between IANA timezones with DST correctness.
+  Never let the LLM guess dates — always call these tools.
 triggers:
   - "what time is it"
   - "what date is it"
+  - "current time"
+  - "current date"
   - "tomorrow"
+  - "yesterday"
   - "next Friday"
+  - "last week"
   - "in 3 weeks"
+  - "90 days from now"
   - "convert time"
   - "timezone"
+  - "time zone"
   - "DST"
   - "daylight saving"
   - "how many days until"
   - "date arithmetic"
   - "add days"
+  - "add months"
   - "start of month"
   - "end of quarter"
+  - "format date"
+  - "ISO 8601"
+  - "unix timestamp"
+  - "is that a Saturday"
+  - "is that before"
+  - "leap year"
+tags:
+  - datetime
+  - timezone
+  - date-parsing
+  - natural-language
+  - iso8601
+  - iana
+  - dst
+  - temporal
+  - scheduling
+  - mcp
 tools:
   - now
   - resolve_time

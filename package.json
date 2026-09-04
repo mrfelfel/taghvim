@@ -84,6 +84,7 @@
   "files": [
     "dist",
     "skills",
+    "SKILL.md",
     "AGENTS.md",
     "README.md"
   ],
