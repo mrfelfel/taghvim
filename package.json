@@ -1,37 +1,72 @@
 {
   "name": "taghvim-mcp",
-  "version": "2.0.0",
-  "description": "MCP Server for Jalali (Persian Solar Hijri) calendar - tools for AI agents",
+  "version": "3.0.0",
+  "description": "Deterministic temporal reasoning engine for AI agents — date/time arithmetic, timezone conversion, calendar systems, holidays, business days, and recurrence",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "taghvim-mcp": "dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node --test dist/index.test.js",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
+    "temporal",
+    "calendar",
     "jalali",
     "persian",
-    "calendar",
     "solar-hijri",
-    "takhvim",
-    "تقویم",
-    "جلالی",
-    "شمسی"
+    "timezone",
+    "holidays",
+    "business-days",
+    "rrule",
+    "recurrence",
+    "date-arithmetic",
+    "ai-agent",
+    "deterministic",
+    "iso8601",
+    "utc",
+    "dcc",
+    "intl"
   ],
   "author": "mj.yahaghi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrfelfel/taghvim"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "chrono-node": "^2.7.7",
+    "date-holidays": "^3.36.0",
     "jalali-moment": "^3.3.1",
+    "luxon": "^3.5.0",
+    "rrule": "^2.8.1",
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/luxon": "^3.4.2",
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
   }
