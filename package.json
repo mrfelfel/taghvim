@@ -24,23 +24,49 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "temporal",
+    "date-time",
     "calendar",
     "jalali",
     "persian",
     "solar-hijri",
+    "shamsi",
+    "iranian-calendar",
     "timezone",
+    "tz",
+    "iana",
     "holidays",
+    "public-holidays",
     "business-days",
+    "working-days",
     "rrule",
     "recurrence",
+    "rfc5545",
+    "icalendar",
     "date-arithmetic",
     "ai-agent",
+    "llm",
+    "agent-tool",
     "deterministic",
     "iso8601",
+    "rfc3339",
     "utc",
-    "dcc",
-    "intl"
+    "dst",
+    "daylight-saving",
+    "luxon",
+    "chrono",
+    "intl",
+    "locale",
+    "formatting",
+    "temporal-reasoning",
+    "date-parsing",
+    "natural-language-date",
+    "schedule",
+    "recurring",
+    "week-number",
+    "iso-week"
   ],
   "author": "mj.yahaghi",
   "license": "MIT",
@@ -48,13 +74,18 @@
     "type": "git",
     "url": "https://github.com/mrfelfel/taghvim"
   },
+  "bugs": {
+    "url": "https://github.com/mrfelfel/taghvim/issues"
+  },
+  "homepage": "https://github.com/mrfelfel/taghvim#readme",
   "engines": {
     "node": ">=18.0.0"
   },
   "files": [
     "dist",
-    "README.md",
-    "LICENSE"
+    "skills",
+    "AGENTS.md",
+    "README.md"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
