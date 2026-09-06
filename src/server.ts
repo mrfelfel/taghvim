@@ -325,7 +325,7 @@ export function registerTools(server: McpServer): void {
 
   server.tool(
     "business_days",
-    "Business-day calculations: check if a date is a business day, find next/previous business day, add business days, count business days between dates. Supports configurable weekends and public holidays by country (US, UK, DE, JP, IR, UAE, etc.). Does NOT assume Saturday/Sunday weekend globally.",
+    "Business-day calculations for any country. IMPORTANT: Always match country_code to the user's context. If user speaks Persian/Farsi or mentions Iran, use 'IR'. If they mention a specific country, use that code. Iran uses Friday-Saturday weekend. Includes all public holidays (Shia/Islamic lunar holidays auto-converted). Operations: is_business_day, next, previous, add, count, last_of_month, range.",
     {
       operation: z
         .enum([
@@ -341,7 +341,7 @@ export function registerTools(server: McpServer): void {
         .string()
         .optional()
         .default("US")
-        .describe("ISO 3166-1 alpha-2 country code, e.g. 'US', 'GB', 'DE', 'JP', 'IR'"),
+        .describe("ISO 3166-1 alpha-2 country code. Use 'IR' for Iran (Fri-Sat weekend), 'US' for USA, 'GB' for UK, 'DE' for Germany, 'JP' for Japan, 'AE' for UAE. Match to the user's country."),
       year: z.number().optional().describe("Year for last_of_month"),
       month: z.number().optional().describe("Month (1-12) for last_of_month"),
     },
@@ -391,7 +391,7 @@ export function registerTools(server: McpServer): void {
 
   server.tool(
     "holidays",
-    "Public holiday intelligence: list all holidays for a country and year, check if a specific date is a holiday, find the next upcoming holiday, or get holidays in a date range. Supports 100+ countries via the IATA holiday database. Distinguishes between actual and observed holiday dates.",
+    "Public holiday intelligence for 100+ countries including Shia/Islamic lunar holidays. IMPORTANT: Always match country_code to the user's context. If user speaks Persian/Farsi or mentions Iran, use 'IR'. Iran ('IR') includes: تاسوعا، عاشورا، اربعین، شهادت فاطمه(س)، عید فطر، عید قربان، عید غدیر، مبعث، ولادت رسول، and more — all auto-converted from lunar Hijri calendar every year. For Iran business days use country_code 'IR' which has Friday-Saturday weekend.",
     {
       operation: z
         .enum(["list", "is_holiday", "next", "between", "countries"])
@@ -399,7 +399,7 @@ export function registerTools(server: McpServer): void {
       country_code: z
         .string()
         .optional()
-        .describe("ISO 3166-1 alpha-2 country code, e.g. 'US', 'GB', 'DE', 'JP'"),
+        .describe("ISO 3166-1 alpha-2. Use 'IR' for Iran (includes Shia/Islamic lunar holidays), 'US' for USA, 'GB' for UK, 'DE' for Germany, 'JP' for Japan, 'AE' for UAE, 'SA' for Saudi Arabia."),
       year: z.number().optional().describe("Year (defaults to current year)"),
       date: z.string().optional().describe("Date to check (YYYY-MM-DD)"),
       start_date: z.string().optional().describe("Range start date (YYYY-MM-DD)"),
@@ -921,6 +921,181 @@ export function registerTools(server: McpServer): void {
           default:
             return err(`Unknown operation: ${operation}`);
         }
+      } catch (e) {
+        return err((e as Error).message);
+      }
+    }
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // next_event — smart "what's coming up" tool
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  server.tool(
+    "next_event",
+    "Smart tool to find the next upcoming event for a user. Combines holidays, business days, and weekend detection. IMPORTANT: Match country_code to user context. Persian/Farsi speaker or mentions Iran → use 'IR'. Returns next holiday, next business day, or weekend status.",
+    {
+      country_code: z
+        .string()
+        .optional()
+        .default("IR")
+        .describe("ISO 3166-1 alpha-2. Use 'IR' for Iran, 'US' for USA, etc."),
+      from_date: z
+        .string()
+        .optional()
+        .describe("Start date (YYYY-MM-DD). Defaults to today."),
+      include_days_until: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Include number of days until each event"),
+    },
+    async ({ country_code, from_date, include_days_until }) => {
+      try {
+        const cc = country_code ?? "IR";
+        const startDate = from_date || new Date().toISOString().slice(0, 10);
+        const dt = DateTime.fromISO(startDate, { zone: "utc" });
+
+        // Get next holiday
+        const nextHol = nextHoliday(cc, startDate);
+
+        // Get next business day
+        const nextBd = nextBusinessDay(startDate, cc);
+
+        // Check if today is a business day
+        const todayCheck = isBusinessDay(startDate, cc);
+
+        // Days until next holiday
+        let daysUntilHoliday: number | null = null;
+        if (nextHol) {
+          const holDt = DateTime.fromISO(nextHol.date, { zone: "utc" });
+          daysUntilHoliday = Math.floor(holDt.diff(dt, "days").days);
+        }
+
+        // Days until next business day (if today is not business day)
+        let daysUntilBusinessDay: number | null = null;
+        if (!todayCheck.isBusinessDay) {
+          const bdDt = DateTime.fromISO(nextBd.date, { zone: "utc" });
+          daysUntilBusinessDay = Math.floor(bdDt.diff(dt, "days").days);
+        }
+
+        return ok({
+          country_code: cc,
+          today: {
+            date: startDate,
+            is_business_day: todayCheck.isBusinessDay,
+            day_type: todayCheck.dayType,
+            holiday_name: todayCheck.holidayName || null,
+          },
+          next_holiday: nextHol
+            ? {
+                date: nextHol.date,
+                name: nextHol.name,
+                days_until: include_days_until ? daysUntilHoliday : undefined,
+              }
+            : null,
+          next_business_day: nextBd
+            ? {
+                date: nextBd.date,
+                days_until: include_days_until ? daysUntilBusinessDay : undefined,
+              }
+            : null,
+        });
+      } catch (e) {
+        return err((e as Error).message);
+      }
+    }
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // month_calendar — visual calendar table
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  server.tool(
+    "month_calendar",
+    "Generate a formatted month calendar as a text table with weekday headers. Marks weekends, holidays, and business days. Supports any country's holidays. Use for displaying a calendar overview.",
+    {
+      year: z.number().describe("Year (e.g. 2026)"),
+      month: z.number().min(1).max(12).describe("Month (1-12)"),
+      country_code: z
+        .string()
+        .optional()
+        .default("IR")
+        .describe("ISO 3166-1 alpha-2 for holiday/weekend marking"),
+      calendar: z
+        .enum(["gregorian", "persian"])
+        .optional()
+        .default("gregorian")
+        .describe("Calendar system for display"),
+    },
+    async ({ year, month, country_code, calendar: cal }) => {
+      try {
+        const cc = country_code ?? "IR";
+        const firstDay = DateTime.utc(year, month, 1);
+        const daysInMonth = firstDay.daysInMonth ?? 31;
+        const startWeekday = firstDay.weekday; // 1=Mon, 7=Sun
+
+        // Get holidays for this month
+        const holidays = getHolidays(cc, year);
+        const holidayMap = new Map<string, string>();
+        for (const h of holidays.holidays) {
+          const m = parseInt(h.date.slice(5, 7), 10);
+          if (m === month) {
+            holidayMap.set(h.date, h.name);
+          }
+        }
+
+        // Build calendar grid
+        const header = "Mon  Tue  Wed  Thu  Fri  Sat  Sun";
+        const weeks: string[] = [];
+        let currentWeek = "    ".repeat(startWeekday - 1);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const weekday = DateTime.utc(year, month, day).weekday;
+          const isHol = holidayMap.has(dateStr);
+          const isWeekendDay = weekday === 6 || weekday === 7; // Sat/Sun for IR
+
+          let dayStr = String(day).padStart(2, " ");
+          if (isHol) dayStr = `[${day}]`;
+          else if (isWeekendDay) dayStr = ` ${day} `;
+
+          currentWeek += dayStr + " ";
+
+          if (weekday === 7 || day === daysInMonth) {
+            weeks.push(currentWeek.trimEnd());
+            currentWeek = "";
+          }
+        }
+
+        // Holiday list for this month
+        const monthHolidays = holidays.holidays.filter((h: { date: string }) => {
+          const m = parseInt(h.date.slice(5, 7), 10);
+          return m === month;
+        });
+
+        const lines = [
+          `${firstDay.toLocaleString({ month: "long" })} ${year} (${cc})`,
+          header,
+          "─".repeat(35),
+          ...weeks,
+        ];
+
+        if (monthHolidays.length > 0) {
+          lines.push("");
+          lines.push("Holidays this month:");
+          for (const h of monthHolidays) {
+            lines.push(`  ${h.date}: ${h.name}`);
+          }
+        }
+
+        return ok({
+          year,
+          month,
+          country_code: cc,
+          calendar_text: lines.join("\n"),
+          holidays: monthHolidays.map((h) => ({ date: h.date, name: h.name })),
+        });
       } catch (e) {
         return err((e as Error).message);
       }
