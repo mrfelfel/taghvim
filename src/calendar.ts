@@ -2,6 +2,8 @@ import { DateTime } from "luxon";
 import moment from "jalali-moment";
 import { JALALI_MONTHS } from "./events.js";
 import type { CalendarSystem, TemporalValue, TemporalPrecision } from "./types.js";
+import { format as formatJalali } from "date-fns-jalali";
+import { convertHijriToGregorian, convertGregorianToHijri, HijriDate } from "./hijri.js";
 
 const WEEKDAY_NAMES = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
@@ -145,4 +147,27 @@ export function weekdayInLocale(
   const base = DateTime.fromISO("2026-01-05"); // a Monday
   const d = base.plus({ days: weekday - 1 });
   return formatIntl(d, locale, { weekday: format });
+}
+
+
+export function convertFromHijri(year: number, month: number, day: number) {
+  const g = convertHijriToGregorian(year, month, day);
+  const gDate = new Date(g.year, g.month - 1, g.day);
+
+  const jYear = parseInt(formatJalali(gDate, "yyyy"), 10);
+  const jMonth = parseInt(formatJalali(gDate, "MM"), 10);
+  const jDay = parseInt(formatJalali(gDate, "dd"), 10);
+  const dayOfWeek = formatJalali(gDate, "EEEE");
+
+  return {
+    inputHijri: { year, month, day, formatted: `${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}` },
+    gregorian: g,
+    jalali: {
+      year: jYear,
+      month: jMonth,
+      day: jDay,
+      formatted: `${jYear}/${String(jMonth).padStart(2, "0")}/${String(jDay).padStart(2, "0")}`,
+      dayOfWeek
+    }
+  };
 }

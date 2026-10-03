@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { DateTime } from "luxon";
-
 import { resolveNaturalLanguage } from "./resolve.js";
 import { buildTemporalValue, nowTemporal } from "./calendar.js";
 import {
@@ -10,6 +9,11 @@ import {
   isValidTimezone,
   listTimezones,
 } from "./timezone.js";
+import {
+  gregorianToHijri,
+  hijriToGregorian,
+  getPrayerTimes,
+} from "./hijri-azan.js";
 import {
   isBusinessDay,
   nextBusinessDay,
@@ -1100,5 +1104,113 @@ export function registerTools(server: McpServer): void {
         return err((e as Error).message);
       }
     }
+  );
+
+  server.tool(
+      "convert_hijri_to_other",
+      "Convert a Hijri (Islamic lunar) date to Gregorian and Solar Hijri (Jalali/Persian) dates. Supports lunar crescent sighting adjustments. Use for cross-calendar conversion, religious event scheduling, and date verification.",
+      {
+        year: z.number().describe("Hijri year (e.g. 1446)"),
+        month: z.number().describe("Hijri month (1-12)"),
+        day: z.number().describe("Hijri day (1-30)"),
+        adjustment: z.number().optional().describe("Lunar sighting day offset (-2 to +2, default 0)")
+      },
+      async ({ year, month, day, adjustment }) => {
+        try {
+          const greg = hijriToGregorian(year, month, day, adjustment ?? 0);
+          const gDate = new Date(greg.year, greg.month - 1, greg.day);
+
+          const faFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            weekday: "long"
+          });
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                    {
+                      hijri: { year, month, day },
+                      gregorian: greg,
+                      persian: faFormatter.format(gDate),
+                      adjustmentUsed: adjustment ?? 0
+                    },
+                    null,
+                    2
+                )
+              }
+            ]
+          };
+        } catch (err: any) {
+          return { content: [{ type: "text", text: `خطا: ${err.message}` }], isError: true };
+        }
+      }
+  );
+
+  server.tool(
+      "convert_to_hijri",
+      "Convert a Gregorian or Solar Hijri (Jalali/Persian) date to a Hijri (Islamic lunar) date. Returns the year, month number, month name, and day with optional lunar sighting adjustments. Use for determining Islamic dates, finding religious occasions, and calendar synchronization.",
+      {
+        date: z.string().describe("تاریخ میلادی (YYYY-MM-DD)"),
+      },
+      async ({ date }) => {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) {
+          return {
+            content: [{ type: "text", text: "فرمت تاریخ میلادی نامعتبر است (فرمت صحیح: YYYY-MM-DD)" }],
+            isError: true,
+          };
+        }
+        const hijri = gregorianToHijri(d);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(hijri, null, 2),
+            },
+          ],
+        };
+      }
+  );
+  server.tool(
+      "prayer_times",
+      "Calculate Islamic prayer times (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha, and Imsak) for any geographic coordinates using Tehran Institute of Geophysics or standard global methods.",
+      {
+        latitude: z.number().describe("Latitude of the location (e.g. Tehran: 35.6892)"),
+        longitude: z.number().describe("Longitude of the location (e.g. Tehran: 51.3890)"),
+        date: z.string().optional().describe("Gregorian date in YYYY-MM-DD format (defaults to current date)"),
+        method: z.enum(["Tehran", "MuslimWorldLeague", "UmmAlQura"]).optional().describe("Calculation method (defaults to Tehran)"),
+      },
+      async ({ latitude, longitude, date, method }) => {
+        try {
+          const d = date ? new Date(date) : new Date();
+          const prayers = getPrayerTimes(latitude, longitude, d, method ?? "Tehran");
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                    {
+                      location: { latitude, longitude },
+                      method: method ?? "Tehran",
+                      date: d.toISOString().split("T")[0],
+                      prayers,
+                    },
+                    null,
+                    2
+                ),
+              },
+            ],
+          };
+        } catch (err: any) {
+          return {
+            content: [{ type: "text", text: `Error calculating prayer times: ${err.message}` }],
+            isError: true,
+          };
+        }
+      }
   );
 }

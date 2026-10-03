@@ -94,11 +94,14 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "adhan": "^4.4.6",
     "chrono-node": "^2.7.7",
+    "date-fns-jalali": "^4.4.0-0",
     "date-holidays": "^3.36.0",
     "jalali-moment": "^3.3.1",
     "luxon": "^3.5.0",
     "rrule": "^2.8.1",
+    "vitest": "^5.0.3",
     "zod": "^3.24.4"
   },
   "devDependencies": {
